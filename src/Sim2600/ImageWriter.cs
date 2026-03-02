@@ -12,16 +12,17 @@ public sealed class ImageWriter
     // 192 lines of image, 30 lines overscan
     private const int FrameHeightPixels = 262;
 
+    private readonly string _fileNamePrefix;
     private int _imageWidth = ScanlineNumPixels;
     private int _imageHeight = FrameHeightPixels;
     private int _lastPixelX, _lastPixelY;
     private int _frameCount;
-    private string _dateTimeStr = DateTime.Now.ToShortTimeString().Replace(":", "_");
 
     private Image<Rgba32> _image;
 
-    public ImageWriter()
+    public ImageWriter(string fileNamePrefix)
     {
+        _fileNamePrefix = fileNamePrefix;
         _image = new Image<Rgba32>(_imageWidth, _imageHeight, new Rgba32(0xFF, 0xFF, 0xFF, 0xFF));
     }
 
@@ -50,17 +51,20 @@ public sealed class ImageWriter
         }
     }
 
-    public void RestartImage()
+    public bool RestartImage()
     {
         // Save if we've got more than 80% of a frame
+        var result = false;
         if (_lastPixelY >= FrameHeightPixels * 0.8)
         {
-            var fileName = $"frame_{_dateTimeStr}_{_frameCount}.png";
+            var fileName = $"{_fileNamePrefix}-{_frameCount}.png";
             Console.WriteLine($"Saving frame {_frameCount} to {fileName}");
             _image.SaveAsPng(fileName);
             _frameCount++;
+            result = true;
         }
         _lastPixelX = 0;
         _lastPixelY = 0;
+        return result;
     }
 }

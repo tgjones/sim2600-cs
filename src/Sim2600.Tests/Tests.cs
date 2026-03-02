@@ -3,14 +3,19 @@
 public class Tests
 {
     [Test]
-    public async Task StateMatchesExpectedValues()
+    [Arguments("Adventure")]
+    [Arguments("Asteroids")]
+    [Arguments("DonkeyKong")]
+    [Arguments("Pitfall")]
+    [Arguments("SpaceInvaders")]
+    public async Task StateMatchesExpectedValues(string rom)
     {
-        var expectedFilePath = Path.Combine("Assets", "ExpectedStates.txt");
-        const string actualFilePath = "ActualStates.txt";
+        var expectedFilePath = Path.Combine("Assets", $"{rom}-ExpectedStates.txt");
+        var actualFilePath = $"{rom}-ActualStates.txt";
 
         {
-            var sim = new Sim2600Console(Path.Combine("Assets", "Roms", "Pitfall.bin"));
-            var imageWriter = new ImageWriter();
+            var sim = new Sim2600Console(Path.Combine("Assets", "Roms", $"{rom}.bin"));
+            var imageWriter = new ImageWriter($"{rom}-ActualFrame");
 
             using var stateWriter = new StreamWriter(actualFilePath);
 
@@ -22,6 +27,7 @@ public class Tests
 
                     if (sim.HalfClkCount == 260_000)
                     {
+                        Assert.Fail("Didn't produce a frame after 260000 half cycles");
                         break;
                     }
                 }
@@ -48,7 +54,12 @@ public class Tests
 
                     if (restartImage)
                     {
-                        imageWriter.RestartImage();
+                        var savedImage = imageWriter.RestartImage();
+                        if (savedImage)
+                        {
+                            sim.WriteState(stateWriter);
+                            break;
+                        }
                     }
                     imageWriter.SetNextPixel(rgba);
 
@@ -60,6 +71,12 @@ public class Tests
             }
         }
 
-        await Assert.That(File.ReadAllText(actualFilePath)).IsEqualTo(File.ReadAllText(expectedFilePath));
+        await Assert
+            .That(File.ReadAllText(actualFilePath))
+            .IsEqualTo(File.ReadAllText(expectedFilePath));
+
+        await Assert
+            .That(File.ReadAllBytes($"{rom}-ActualFrame-0.png"))
+            .IsEquivalentTo(File.ReadAllBytes(Path.Combine("Assets", $"{rom}-ExpectedFrame-0.png")));
     }
 }

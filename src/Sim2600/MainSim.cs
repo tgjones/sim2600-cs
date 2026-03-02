@@ -10,7 +10,7 @@ public sealed class MainSim
     public static void Execute(string romFilePath)
     {
         var sim = new Sim2600Console(romFilePath);
-        var imageWriter = new ImageWriter();
+        var imageWriter = new ImageWriter(Path.GetFileNameWithoutExtension(romFilePath));
 
         var lastUpdateTimeSec = DateTime.MinValue;
 

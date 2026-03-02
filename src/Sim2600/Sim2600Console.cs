@@ -70,7 +70,7 @@ public sealed class Sim2600Console
         }
         else if (addr >= 0xF000 || (addr >= 0xD000 && addr <= 0xDFFF && _programLen == 8192))
         {
-            data = _rom[addr - 0xF000 + BankSwitchROMOffset];
+            data = _rom[(addr & 0x0FFF) + BankSwitchROMOffset];
         }
         else if (addr >= 0x30 && addr <= 0x3D)
         {
@@ -156,12 +156,12 @@ public sealed class Sim2600Console
             {
                 if (address == 0xFFF9)
                 {
-                    // Switch to bank 0 which starts at 0xD0000
-                    BankSwitchROMOffset = 0x2000;
+                    // Switch to bank 1 which starts at 0xD0000
+                    BankSwitchROMOffset = 0x1000;
                 }
                 else if (address == 0xFFF8)
                 {
-                    BankSwitchROMOffset = 0x1000;
+                    BankSwitchROMOffset = 0x0000;
                 }
             }
             else

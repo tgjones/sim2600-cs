@@ -6,8 +6,6 @@
         <OutputType>Exe</OutputType>
         <TargetFramework>net10.0</TargetFramework>
         <TestRomFolder>$(MSBuildProjectDirectory)/Assets/Roms</TestRomFolder>
-        <TestRomFileName>Pitfall.bin</TestRomFileName>
-        <TestRomFilePath>$(TestRomFolder)/$(TestRomFileName)</TestRomFilePath>
     </PropertyGroup>
 
     <ItemGroup>
@@ -22,20 +20,32 @@
         <Content Include="Assets\**\*.*" CopyToOutputDirectory="PreserveNewest" />
     </ItemGroup>
 
+    <ItemGroup>
+        <RomFile Include="Adventure.bin" />
+        <RomFile Include="Asteroids.bin" />
+        <RomFile Include="DonkeyKong.bin" />
+        <RomFile Include="Pitfall.bin" />
+        <RomFile Include="SpaceInvaders.bin" />
+    </ItemGroup>
+
     <Target Name="DownloadTestRom" 
-            BeforeTargets="PrepareForBuild" 
-            Condition="!Exists('$(TestRomFilePath)')"
-            Outputs="$(TestRomFilePath)">
-        <Message Importance="high" Text="Downloading test ROM from GitHub..." />
-		<DownloadFile SourceUrl="https://github.com/gregjames/Sim2600/raw/refs/heads/master/roms/Pitfall.bin"
+            BeforeTargets="PrepareForBuild">
+        <ItemGroup>
+            <MissingTestRom Include="@(RomFile)" Condition="!Exists('$(TestRomFolder)/%(RomFile.Identity)')" />
+        </ItemGroup>
+        <Message Importance="high" 
+                 Text="Downloading test ROM: %(MissingTestRom.Identity)..." 
+                 Condition="'@(MissingTestRom)' != ''" />
+        <DownloadFile SourceUrl="https://github.com/gregjames/Sim2600/raw/refs/heads/master/roms/%(MissingTestRom.Identity)"
                       DestinationFolder="$(TestRomFolder)"
-                      DestinationFileName="$(TestRomFileName)"
-                      SkipUnchangedFiles="true">
-			<Output TaskParameter="DownloadedFile" ItemName="DownloadedTestRoms" />
-		</DownloadFile>
-		<ItemGroup>
-			<Content Include="@(DownloadedTestRoms)" CopyToOutputDirectory="PreserveNewest" />
-		</ItemGroup>
+                      DestinationFileName="%(MissingTestRom.Identity)"
+                      SkipUnchangedFiles="true"
+                      Condition="'@(MissingTestRom)' != ''">
+            <Output TaskParameter="DownloadedFile" ItemName="DownloadedTestRoms" />
+        </DownloadFile>
+        <ItemGroup>
+            <Content Include="@(DownloadedTestRoms)" CopyToOutputDirectory="PreserveNewest" />
+        </ItemGroup>
     </Target>
 
 </Project>
