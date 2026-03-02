@@ -13,6 +13,12 @@ public class Tests
         var expectedFilePath = Path.Combine("Assets", $"{rom}-ExpectedStates.txt");
         var actualFilePath = $"{rom}-ActualStates.txt";
 
+        var actualFrameFileName = $"{rom}-ActualFrame-0.png";
+        if (File.Exists(actualFrameFileName))
+        {
+            File.Delete(actualFrameFileName);
+        }
+
         {
             var sim = new Sim2600Console(Path.Combine("Assets", "Roms", $"{rom}.bin"));
             var imageWriter = new ImageWriter($"{rom}-ActualFrame");
@@ -72,11 +78,15 @@ public class Tests
         }
 
         await Assert
-            .That(File.ReadAllText(actualFilePath))
-            .IsEqualTo(File.ReadAllText(expectedFilePath));
-
-        await Assert
-            .That(File.ReadAllBytes($"{rom}-ActualFrame-0.png"))
+            .That(File.ReadAllBytes(actualFrameFileName))
             .IsEquivalentTo(File.ReadAllBytes(Path.Combine("Assets", $"{rom}-ExpectedFrame-0.png")));
+
+#if false
+        File.WriteAllText(Path.Combine("..", "..", "..", expectedFilePath), File.ReadAllText(actualFilePath));
+#else
+        await Assert
+                .That(File.ReadAllText(actualFilePath))
+                .IsEqualTo(File.ReadAllText(expectedFilePath));
+#endif
     }
 }

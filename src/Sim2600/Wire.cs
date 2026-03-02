@@ -4,8 +4,6 @@ public sealed class Wire
 {
     public const byte PULLED_HIGH = 1 << 0;
     public const byte PULLED_LOW = 1 << 1;
-    public const byte GROUNDED = 1 << 2;
-    public const byte HIGH = 1 << 3;
     public const byte FLOATING_HIGH = 1 << 4;
     public const byte FLOATING_LOW = 1 << 5;
     public const byte FLOATING = 1 << 6;
@@ -82,7 +80,6 @@ public sealed class Wire
     {
         FLOATING_HIGH => true,
         PULLED_HIGH => true,
-        HIGH => true,
         _ => false
     };
 
@@ -90,7 +87,6 @@ public sealed class Wire
     {
         FLOATING_LOW => true,
         PULLED_LOW => true,
-        GROUNDED => true,
         _ => false
     };
 }
