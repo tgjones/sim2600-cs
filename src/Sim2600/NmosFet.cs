@@ -24,6 +24,6 @@ public sealed class NmosFet
 
     public string ToDisplayString()
     {
-        return $"Gate={GateWireIndex} C1={Side1WireIndex} C2={Side2WireIndex}";
+        return $"Gate=({GateWireIndex}) C1=({Side1WireIndex}) C2=({Side2WireIndex})";
     }
 }
