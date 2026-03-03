@@ -2,11 +2,6 @@
 
 public sealed class Wire
 {
-    public const byte PULLED_HIGH = 1 << 0;
-    public const byte PULLED_LOW = 1 << 1;
-    public const byte FLOATING_HIGH = 1 << 4;
-    public const byte FLOATING_LOW = 1 << 5;
-
     private readonly int _index;
     private readonly string _name;
 
@@ -24,15 +19,15 @@ public sealed class Wire
     /// pulled reflects whether or not the wire is connected to
     /// a pullup or pulldown.
     /// </summary>
-    public byte Pulled { get; set; }
+    public NodePulled Pulled { get; set; }
 
     /// <summary>
     /// state reflects the logical state of the wire as the 
     /// simulation progresses.
     /// </summary>
-    public byte State { get; set; }
+    public NodeState State { get; set; }
 
-    public Wire(int idIndex, string name, int[] controlTransIndices, int[] transGateIndices, byte pulled)
+    public Wire(int idIndex, string name, int[] controlTransIndices, int[] transGateIndices, NodePulled pulled)
     {
         _index = idIndex;
         _name = name;
@@ -40,6 +35,7 @@ public sealed class Wire
         GateIndices = transGateIndices;
 
         Pulled = pulled;
+        State = NodeState.Floating;
     }
 
     /// <summary>
@@ -47,7 +43,8 @@ public sealed class Wire
     /// </summary>
     public void SetHigh()
     {
-        Pulled = State = PULLED_HIGH;
+        Pulled = NodePulled.PulledHigh;
+        State = NodeState.PulledHigh;
     }
 
     /// <summary>
@@ -55,7 +52,8 @@ public sealed class Wire
     /// </summary>
     public void SetLow()
     {
-        Pulled = State = PULLED_LOW;
+        Pulled = NodePulled.PulledLow;
+        State = NodeState.PulledLow;
     }
 
     /// <summary>
@@ -76,15 +74,31 @@ public sealed class Wire
 
     public bool IsHigh() => State switch
     {
-        FLOATING_HIGH => true,
-        PULLED_HIGH => true,
+        NodeState.PulledHigh => true,
+        NodeState.FloatingHigh => true,
         _ => false
     };
 
     public bool IsLow() => State switch
     {
-        FLOATING_LOW => true,
-        PULLED_LOW => true,
+        NodeState.PulledLow => true,
+        NodeState.FloatingLow => true,
         _ => false
     };
+}
+
+public enum NodePulled : byte
+{
+    Floating,
+    PulledLow,
+    PulledHigh,
+}
+
+public enum NodeState : byte
+{
+    PulledLow,
+    PulledHigh,
+    Floating,
+    FloatingLow,
+    FloatingHigh,
 }

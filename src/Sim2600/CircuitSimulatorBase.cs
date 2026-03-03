@@ -66,19 +66,19 @@ public abstract class CircuitSimulatorBase
 
             wire.Pulled = state[index++] switch
             {
-                '_' => 0,
-                'h' => Wire.PULLED_HIGH,
-                'l' => Wire.PULLED_LOW,
+                '_' => NodePulled.Floating,
+                'h' => NodePulled.PulledHigh,
+                'l' => NodePulled.PulledLow,
                 _ => throw new InvalidOperationException($"Invalid character")
             };
 
             wire.State = state[index++] switch
             {
-                '_' => 0,
-                'h' => Wire.PULLED_HIGH,
-                'l' => Wire.PULLED_LOW,
-                'F' => Wire.FLOATING_HIGH,
-                'f' => Wire.FLOATING_LOW,
+                '_' => NodeState.Floating,
+                'l' => NodeState.PulledLow,
+                'h' => NodeState.PulledHigh,
+                'f' => NodeState.FloatingLow,
+                'F' => NodeState.FloatingHigh,
                 _ => throw new InvalidOperationException($"Invalid character")
             };
         }
@@ -111,9 +111,9 @@ public abstract class CircuitSimulatorBase
 
             result.Append(wire.Pulled switch
             {
-                0 => "_",
-                Wire.PULLED_HIGH => "h",
-                Wire.PULLED_LOW => "l",
+                NodePulled.Floating => "_",
+                NodePulled.PulledLow => "l",
+                NodePulled.PulledHigh => "h",
                 _ => throw new InvalidOperationException()
             });
 
@@ -129,11 +129,11 @@ public abstract class CircuitSimulatorBase
             {
                 result.Append(wire.State switch
                 {
-                    0 => "_",
-                    Wire.PULLED_HIGH => "h",
-                    Wire.PULLED_LOW => "l",
-                    Wire.FLOATING_HIGH => "F",
-                    Wire.FLOATING_LOW => "f",
+                    NodeState.PulledLow => "l",
+                    NodeState.PulledHigh => "h",
+                    NodeState.Floating => '_',
+                    NodeState.FloatingLow => "f",
+                    NodeState.FloatingHigh => "F",
                     _ => throw new InvalidOperationException()
                 });
             }
@@ -324,19 +324,19 @@ public abstract class CircuitSimulatorBase
 
         if ((_groupState & GroupState.ContainsGnd) != 0)
         {
-            newValue = Wire.PULLED_LOW;
+            newValue = NodeState.PulledLow;
         }
         else if ((_groupState & GroupState.ContainsPwr) != 0)
         {
-            newValue = Wire.PULLED_HIGH;
+            newValue = NodeState.PulledHigh;
         }
         else if ((_groupState & GroupState.ContainsPulldown) != 0)
         {
-            newValue = Wire.PULLED_LOW;
+            newValue = NodeState.PulledLow;
         }
         else if ((_groupState & GroupState.ContainsPullup) != 0)
         {
-            newValue = Wire.PULLED_HIGH;
+            newValue = NodeState.PulledHigh;
         }
         else if ((_groupState & GroupState.ContainsFloatingLo) != 0 && (_groupState & GroupState.ContainsFloatingHi) != 0)
         {
@@ -344,14 +344,14 @@ public abstract class CircuitSimulatorBase
         }
         else if ((_groupState & GroupState.ContainsFloatingLo) != 0)
         {
-            newValue = Wire.FLOATING_LOW;
+            newValue = NodeState.FloatingLow;
         }
         else if ((_groupState & GroupState.ContainsFloatingHi) != 0)
         {
-            newValue = Wire.FLOATING_HIGH;
+            newValue = NodeState.FloatingHigh;
         }
 
-        var newHigh = newValue == Wire.PULLED_HIGH  || newValue == Wire.FLOATING_HIGH;
+        var newHigh = newValue == NodeState.PulledHigh  || newValue == NodeState.FloatingHigh;
 
         _logger?.SetGroupState(_groupState, newValue);
 
@@ -482,20 +482,20 @@ public abstract class CircuitSimulatorBase
         var wire = _wires[wireIndex];
 
         // Wire.Pulled is 0, 1, or 2
-        if (wire.Pulled == Wire.PULLED_HIGH)
+        if (wire.Pulled == NodePulled.PulledHigh)
         {
             _groupState |= GroupState.ContainsPullup;
         }
-        else if (wire.Pulled == Wire.PULLED_LOW)
+        else if (wire.Pulled == NodePulled.PulledLow)
         {
             _groupState |= GroupState.ContainsPulldown;
         }
 
-        if (wire.State == Wire.FLOATING_LOW)
+        if (wire.State == NodeState.FloatingLow)
         {
             _groupState |= GroupState.ContainsFloatingLo;
         }
-        else if (wire.State == Wire.FLOATING_HIGH)
+        else if (wire.State == NodeState.FloatingHigh)
         {
             _groupState |= GroupState.ContainsFloatingHi;
         }
@@ -528,7 +528,7 @@ public abstract class CircuitSimulatorBase
         }
     }
 
-    private byte CountWireSizes()
+    private NodeState CountWireSizes()
     {
         var countFloatingLow = 0;
         var countFloatingHigh = 0;
@@ -538,11 +538,11 @@ public abstract class CircuitSimulatorBase
             var wire = _wires[_groupList[i]];
 
             var num = wire.CTIndices.Length + wire.GateIndices.Length;
-            if (wire.State == Wire.FLOATING_LOW)
+            if (wire.State == NodeState.FloatingLow)
             {
                 countFloatingLow += num;
             }
-            else if (wire.State == Wire.FLOATING_HIGH)
+            else if (wire.State == NodeState.FloatingHigh)
             {
                 countFloatingHigh += num;
             }
@@ -550,10 +550,10 @@ public abstract class CircuitSimulatorBase
 
         if (countFloatingHigh < countFloatingLow)
         {
-            return Wire.FLOATING_LOW;
+            return NodeState.FloatingLow;
         }
 
-        return Wire.FLOATING_HIGH;
+        return NodeState.FloatingHigh;
     }
 
     protected void FloatWire(int n)
@@ -565,24 +565,24 @@ public abstract class CircuitSimulatorBase
             return;
         }
 
-        if (wire.Pulled == Wire.PULLED_HIGH)
+        if (wire.Pulled == NodePulled.PulledHigh)
         {
-            wire.State = Wire.PULLED_HIGH;
+            wire.State = NodeState.PulledHigh;
         }
-        else if (wire.Pulled == Wire.PULLED_LOW)
+        else if (wire.Pulled == NodePulled.PulledLow)
         {
-            wire.State = Wire.PULLED_LOW;
+            wire.State = NodeState.PulledLow;
         }
         else
         {
             var state = wire.State;
-            if (state == Wire.PULLED_LOW)
+            if (state == NodeState.PulledLow)
             {
-                wire.State = Wire.FLOATING_LOW;
+                wire.State = NodeState.FloatingLow;
             }
-            if (state == Wire.PULLED_HIGH)
+            if (state == NodeState.PulledHigh)
             {
-                wire.State = Wire.FLOATING_HIGH;
+                wire.State = NodeState.FloatingHigh;
             }
         }
     }
@@ -697,7 +697,14 @@ public abstract class CircuitSimulatorBase
             }
             else
             {
-                _wires[i] = new Wire(i, (string)wireNames[i], controlFets.ToArray(), gates.ToArray(), wirePulled[i]);
+                var wirePulledValue = wirePulled[i] switch
+                {
+                    0 => NodePulled.Floating,
+                    1 => NodePulled.PulledHigh,
+                    2 => NodePulled.PulledLow,
+                    _ => throw new InvalidOperationException()
+                };
+                _wires[i] = new Wire(i, (string)wireNames[i], controlFets.ToArray(), gates.ToArray(), wirePulledValue);
                 _wireNames[(string)wireNames[i]] = i;
             }
         }
@@ -724,8 +731,8 @@ public abstract class CircuitSimulatorBase
         _vccWireIndex = _wireNames["VCC"];
         _gndWireIndex = _wireNames["VSS"];
 
-        _wires[_vccWireIndex].State = Wire.PULLED_HIGH;
-        _wires[_gndWireIndex].State = Wire.PULLED_LOW;
+        _wires[_vccWireIndex].State = NodeState.PulledHigh;
+        _wires[_gndWireIndex].State = NodeState.PulledLow;
 
         foreach (var transInd in _wires[_vccWireIndex].GateIndices)
         {
@@ -770,7 +777,7 @@ public abstract class CircuitSimulatorBase
             _currentRecalcNode = new RecalcNode(nodeId);
         }
 
-        public void AddNodeToGroup(int nodeId, int currentValue)
+        public void AddNodeToGroup(int nodeId, NodeState currentValue)
         {
             if (!_currentRecalcNode!.Group.Any(x => x.Item1 == nodeId))
             {
@@ -783,7 +790,7 @@ public abstract class CircuitSimulatorBase
             _nextNodeTransistorGate = gate;
         }
 
-        public void SetGroupState(GroupState currentGroupState, int newGroupState)
+        public void SetGroupState(GroupState currentGroupState, NodeState newGroupState)
         {
             _currentRecalcNode!.CurrentGroupState = currentGroupState;
             _currentRecalcNode!.NewGroupState = newGroupState;
@@ -901,9 +908,9 @@ public abstract class CircuitSimulatorBase
         private sealed class RecalcNode(int nodeId)
         {
             public int NodeId => nodeId;
-            public List<(int, int?, int)> Group { get; } = [];
+            public List<(int, int?, NodeState)> Group { get; } = [];
             public GroupState CurrentGroupState { get; set; }
-            public int NewGroupState { get; set; }
+            public NodeState NewGroupState { get; set; }
             public List<(NmosFet, bool)> AffectedTransistors { get; } = [];
             public List<NmosFet> UnaffectedTransistors { get; } = [];
         }
