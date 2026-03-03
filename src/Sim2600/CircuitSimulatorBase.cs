@@ -357,11 +357,6 @@ public abstract class CircuitSimulatorBase
         {
             var index = _groupList[i];
 
-            if (index == _gndWireIndex || index == _vccWireIndex)
-            {
-                continue;
-            }
-
             var simWire = _wires[index];
             simWire.State = newValue;
 
@@ -441,9 +436,6 @@ public abstract class CircuitSimulatorBase
             return;
         }
 
-        _groupList[_groupListLastIndex++] = wireIndex;
-        _lastWireGroupState[wireIndex] = _lastChipGroupState;
-
         if (wireIndex == _gndWireIndex)
         {
             _groupState |= GroupState.ContainsGnd;
@@ -454,6 +446,9 @@ public abstract class CircuitSimulatorBase
             _groupState |= GroupState.ContainsPwr;
             return;
         }
+
+        _groupList[_groupListLastIndex++] = wireIndex;
+        _lastWireGroupState[wireIndex] = _lastChipGroupState;
 
         var wire = _wires[wireIndex];
 
