@@ -433,9 +433,6 @@ public abstract class CircuitSimulatorBase
         var c1Wire = transistor.Side1WireIndex;
         var c2Wire = transistor.Side2WireIndex;
 
-        FloatWire(c1Wire);
-        FloatWire(c2Wire);
-
         var wireInd = transistor.Side1WireIndex;
         if (!_newRecalcArray[wireInd])
         {
@@ -489,11 +486,11 @@ public abstract class CircuitSimulatorBase
             _groupState |= GroupState.ContainsPulldown;
         }
 
-        if (wire.State == NodeState.FloatingLow)
+        if (wire.State == NodeState.FloatingLow || wire.State == NodeState.PulledLow)
         {
             _groupState |= GroupState.ContainsFloatingLo;
         }
-        else if (wire.State == NodeState.FloatingHigh)
+        else if (wire.State == NodeState.FloatingHigh || wire.State == NodeState.PulledHigh)
         {
             _groupState |= GroupState.ContainsFloatingHi;
         }
@@ -552,37 +549,6 @@ public abstract class CircuitSimulatorBase
         }
 
         return NodeState.FloatingHigh;
-    }
-
-    protected void FloatWire(int n)
-    {
-        var wire = _wires[n];
-
-        if (n == _vccWireIndex || n == _gndWireIndex)
-        {
-            return;
-        }
-
-        if (wire.Pulled == NodePulled.PulledHigh)
-        {
-            wire.State = NodeState.PulledHigh;
-        }
-        else if (wire.Pulled == NodePulled.PulledLow)
-        {
-            wire.State = NodeState.PulledLow;
-        }
-        else
-        {
-            var state = wire.State;
-            if (state == NodeState.PulledLow)
-            {
-                wire.State = NodeState.FloatingLow;
-            }
-            if (state == NodeState.PulledHigh)
-            {
-                wire.State = NodeState.FloatingHigh;
-            }
-        }
     }
 
     // setHighWN() and setLowWN() do not trigger an update
