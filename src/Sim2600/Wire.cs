@@ -35,7 +35,13 @@ public sealed class Wire
         GateIndices = transGateIndices;
 
         Pulled = pulled;
-        State = NodeState.Floating;
+        State = pulled switch
+        {
+            NodePulled.Floating => NodeState.FloatingLow,
+            NodePulled.PulledLow => NodeState.FloatingLow,
+            NodePulled.PulledHigh => NodeState.FloatingHigh,
+            _ => throw new Exception($"Unexpected Pulled value {pulled}")
+        };
     }
 
     /// <summary>
@@ -98,7 +104,6 @@ public enum NodeState : byte
 {
     PulledLow,
     PulledHigh,
-    Floating,
     FloatingLow,
     FloatingHigh,
 }
