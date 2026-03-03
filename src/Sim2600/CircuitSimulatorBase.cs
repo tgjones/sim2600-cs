@@ -166,7 +166,7 @@ public abstract class CircuitSimulatorBase
         var wireIndices = new List<int>(_wires.Length);
         for (var i = 0; i < _wires.Length; i++)
         {
-            if (_wires[i] != null)
+            if (_wires[i] != null && i != _vccWireIndex && i != _gndWireIndex)
             {
                 wireIndices.Add(i);
             }
@@ -407,21 +407,8 @@ public abstract class CircuitSimulatorBase
 
         transistor.GateState = NmosFet.GATE_HIGH;
 
-        var wireInd = transistor.Side1WireIndex;
-        if (!_newRecalcArray[wireInd])
-        {
-            _newRecalcArray[wireInd] = true;
-            _newRecalcOrder[_newLastRecalcOrder++] = wireInd;
-            _lastChipGroupState++;
-        }
-
-        wireInd = transistor.Side2WireIndex;
-        if (!_newRecalcArray[wireInd])
-        {
-            _newRecalcArray[wireInd] = true;
-            _newRecalcOrder[_newLastRecalcOrder++] = wireInd;
-            _lastChipGroupState++;
-        }
+        AddRecalcNode(transistor.Side1WireIndex);
+        AddRecalcNode(transistor.Side2WireIndex);
     }
 
     private void TurnTransistorOff(NmosFet transistor)
@@ -430,15 +417,12 @@ public abstract class CircuitSimulatorBase
 
         transistor.GateState = NmosFet.GATE_LOW;
 
-        var wireInd = transistor.Side1WireIndex;
-        if (!_newRecalcArray[wireInd])
-        {
-            _newRecalcArray[wireInd] = true;
-            _newRecalcOrder[_newLastRecalcOrder++] = wireInd;
-            _lastChipGroupState++;
-        }
+        AddRecalcNode(transistor.Side1WireIndex);
+        AddRecalcNode(transistor.Side2WireIndex);
+    }
 
-        wireInd = transistor.Side2WireIndex;
+    private void AddRecalcNode(int wireInd)
+    {
         if (!_newRecalcArray[wireInd])
         {
             _newRecalcArray[wireInd] = true;
