@@ -40,7 +40,6 @@ public sealed class Wire
         GateIndices = transGateIndices;
 
         Pulled = pulled;
-        State = pulled;
     }
 
     /// <summary>
