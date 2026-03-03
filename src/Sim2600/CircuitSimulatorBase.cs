@@ -560,6 +560,11 @@ public abstract class CircuitSimulatorBase
     {
         var wire = _wires[n];
 
+        if (n == _vccWireIndex || n == _gndWireIndex)
+        {
+            return;
+        }
+
         if (wire.Pulled == Wire.PULLED_HIGH)
         {
             wire.State = Wire.PULLED_HIGH;
