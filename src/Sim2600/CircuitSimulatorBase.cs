@@ -403,7 +403,6 @@ public abstract class CircuitSimulatorBase
         transistor.GateState = NmosFet.GATE_HIGH;
 
         AddRecalcNode(transistor.Side1WireIndex);
-        AddRecalcNode(transistor.Side2WireIndex);
     }
 
     private void TurnTransistorOff(NmosFet transistor)
@@ -651,6 +650,9 @@ public abstract class CircuitSimulatorBase
 
         _transistors = new NmosFet[numFets];
 
+        _vccWireIndex = _wireNames["VCC"];
+        _gndWireIndex = _wireNames["VSS"];
+
         for (var i = 0; i < numFets; i++)
         {
             var s1 = fetSide1WireInds[i];
@@ -670,9 +672,6 @@ public abstract class CircuitSimulatorBase
                 _transistors[i] = new NmosFet(i, s1, s2, gate);
             }
         }
-
-        _vccWireIndex = _wireNames["VCC"];
-        _gndWireIndex = _wireNames["VSS"];
 
         _wires[_vccWireIndex].State = NodeState.PulledHigh;
         _wires[_gndWireIndex].State = NodeState.PulledLow;
