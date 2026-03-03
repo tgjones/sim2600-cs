@@ -76,8 +76,7 @@ public abstract class CircuitSimulatorBase
             {
                 'l' => NodeState.PulledLow,
                 'h' => NodeState.PulledHigh,
-                'f' => NodeState.FloatingLow,
-                'F' => NodeState.FloatingHigh,
+                'f' => NodeState.Floating,
                 _ => throw new InvalidOperationException($"Invalid character")
             };
         }
@@ -130,8 +129,7 @@ public abstract class CircuitSimulatorBase
                 {
                     NodeState.PulledLow => "l",
                     NodeState.PulledHigh => "h",
-                    NodeState.FloatingLow => "f",
-                    NodeState.FloatingHigh => "F",
+                    NodeState.Floating => "f",
                     _ => throw new InvalidOperationException()
                 });
             }
@@ -342,14 +340,14 @@ public abstract class CircuitSimulatorBase
         }
         else if ((_groupState & GroupState.ContainsFloatingLo) != 0)
         {
-            newValue = NodeState.FloatingLow;
+            newValue = NodeState.Floating;
         }
         else if ((_groupState & GroupState.ContainsFloatingHi) != 0)
         {
-            newValue = NodeState.FloatingHigh;
+            newValue = NodeState.PulledHigh;
         }
 
-        var newHigh = newValue == NodeState.PulledHigh  || newValue == NodeState.FloatingHigh;
+        var newHigh = newValue == NodeState.PulledHigh;
 
         _logger?.SetGroupState(_groupState, newValue);
 
@@ -461,11 +459,11 @@ public abstract class CircuitSimulatorBase
             _groupState |= GroupState.ContainsPulldown;
         }
 
-        if (wire.State == NodeState.FloatingLow || wire.State == NodeState.PulledLow)
+        if (wire.State == NodeState.Floating || wire.State == NodeState.PulledLow)
         {
             _groupState |= GroupState.ContainsFloatingLo;
         }
-        else if (wire.State == NodeState.FloatingHigh || wire.State == NodeState.PulledHigh)
+        else if (wire.State == NodeState.PulledHigh)
         {
             _groupState |= GroupState.ContainsFloatingHi;
         }
@@ -508,11 +506,11 @@ public abstract class CircuitSimulatorBase
             var wire = _wires[_groupList[i]];
 
             var num = wire.CTIndices.Length + wire.GateIndices.Length;
-            if (wire.State == NodeState.FloatingLow)
+            if (wire.State == NodeState.Floating || wire.State == NodeState.PulledLow)
             {
                 countFloatingLow += num;
             }
-            else if (wire.State == NodeState.FloatingHigh)
+            else if (wire.State == NodeState.PulledHigh)
             {
                 countFloatingHigh += num;
             }
@@ -520,10 +518,10 @@ public abstract class CircuitSimulatorBase
 
         if (countFloatingHigh < countFloatingLow)
         {
-            return NodeState.FloatingLow;
+            return NodeState.Floating;
         }
 
-        return NodeState.FloatingHigh;
+        return NodeState.PulledHigh;
     }
 
     // setHighWN() and setLowWN() do not trigger an update
