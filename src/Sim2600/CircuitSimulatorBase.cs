@@ -498,30 +498,24 @@ public abstract class CircuitSimulatorBase
 
     private NodeState CountWireSizes()
     {
-        var countFloatingLow = 0;
-        var countFloatingHigh = 0;
+        var maxState = NodeState.PulledLow;
+        var maxConnections = 0;
 
         for (var i = 0; i < _groupListLastIndex; i++)
         {
             var wire = _wires[_groupList[i]];
 
             var num = wire.CTIndices.Length + wire.GateIndices.Length;
-            if (wire.State == NodeState.Floating)
+            if (num > maxConnections)
             {
-                countFloatingLow += num;
-            }
-            else if (wire.State == NodeState.PulledHigh)
-            {
-                countFloatingHigh += num;
+                maxConnections = num;
+                maxState = wire.State == NodeState.PulledHigh
+                    ? NodeState.PulledHigh 
+                    : NodeState.PulledLow;
             }
         }
 
-        if (countFloatingHigh < countFloatingLow)
-        {
-            return NodeState.Floating;
-        }
-
-        return NodeState.PulledHigh;
+        return maxState;
     }
 
     // setHighWN() and setLowWN() do not trigger an update
