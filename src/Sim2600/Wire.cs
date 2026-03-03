@@ -50,7 +50,6 @@ public sealed class Wire
     public void SetHigh()
     {
         Pulled = NodePulled.PulledHigh;
-        State = NodeState.PulledHigh;
     }
 
     /// <summary>
@@ -59,7 +58,6 @@ public sealed class Wire
     public void SetLow()
     {
         Pulled = NodePulled.PulledLow;
-        State = NodeState.PulledLow;
     }
 
     /// <summary>
