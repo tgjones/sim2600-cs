@@ -489,7 +489,7 @@ public abstract class CircuitSimulatorBase
         {
             var wire = _wires[_groupList[i]];
 
-            var num = wire.CTIndices.Length + wire.GateIndices.Length;
+            var num = wire.CTIndices.Count + wire.GateIndices.Count;
             if (num > maxConnections)
             {
                 maxConnections = num;
@@ -619,7 +619,7 @@ public abstract class CircuitSimulatorBase
                     2 => NodePulled.PulledLow,
                     _ => throw new InvalidOperationException()
                 };
-                _wires[i] = new Wire(i, (string)wireNames[i], controlFets.ToArray(), gates.ToArray(), wirePulledValue);
+                _wires[i] = new Wire(i, (string)wireNames[i], wirePulledValue);
                 _wireNames[(string)wireNames[i]] = i;
             }
         }
@@ -646,6 +646,10 @@ public abstract class CircuitSimulatorBase
                 else if (s1 == _vccWireIndex) { s1 = s2; s2 = _vccWireIndex; }
                 
                 _transistors[i] = new NmosFet(i, s1, s2, gate);
+
+                _wires[gate].GateIndices.Add(i);
+                _wires[s1].CTIndices.Add(i);
+                _wires[s2].CTIndices.Add(i);
             }
         }
 

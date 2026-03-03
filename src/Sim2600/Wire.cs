@@ -8,12 +8,12 @@ public sealed class Wire
     /// <summary>
     /// Transistors that switch other wires into connection with this wire
     /// </summary>
-    public readonly int[] CTIndices;
+    public readonly List<int> CTIndices;
 
     /// <summary>
     /// Transistors whos gate is driven by this wire
     /// </summary>
-    public readonly int[] GateIndices;
+    public readonly List<int> GateIndices;
 
     /// <summary>
     /// pulled reflects whether or not the wire is connected to
@@ -27,12 +27,12 @@ public sealed class Wire
     /// </summary>
     public NodeState State { get; set; }
 
-    public Wire(int idIndex, string name, int[] controlTransIndices, int[] transGateIndices, NodePulled pulled)
+    public Wire(int idIndex, string name, NodePulled pulled)
     {
         _index = idIndex;
         _name = name;
-        CTIndices = controlTransIndices;
-        GateIndices = transGateIndices;
+        CTIndices = new List<int>();
+        GateIndices = new List<int>();
 
         Pulled = pulled;
         State = NodeState.Floating;
