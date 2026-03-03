@@ -629,7 +629,7 @@ public abstract class CircuitSimulatorBase
             }
         }
 
-        _transistors = new NmosFet[numFets];
+        var transistors = new List<NmosFet>();
 
         _vccWireIndex = _wireNames["VCC"];
         _gndWireIndex = _wireNames["VSS"];
@@ -650,13 +650,22 @@ public abstract class CircuitSimulatorBase
                 if (s1 == _gndWireIndex) { s1 = s2; s2 = _gndWireIndex; }
                 else if (s1 == _vccWireIndex) { s1 = s2; s2 = _vccWireIndex; }
                 
-                _transistors[i] = new NmosFet(i, s1, s2, gate);
+                if (transistors.Find(t => t.GateWireIndex == gate && t.Side1WireIndex == s1 && t.Side2WireIndex == s2) != null)
+                {
+                    continue;
+                }
 
-                _wires[gate].GateIndices.Add(i);
-                _wires[s1].CTIndices.Add(i);
-                _wires[s2].CTIndices.Add(i);
+                var transistorIndex = transistors.Count;
+
+                transistors.Add(new NmosFet(transistorIndex, s1, s2, gate));
+
+                _wires[gate].GateIndices.Add(transistorIndex);
+                _wires[s1].CTIndices.Add(transistorIndex);
+                _wires[s2].CTIndices.Add(transistorIndex);
             }
         }
+
+        _transistors = transistors.ToArray();
 
         _wires[_vccWireIndex].State = NodeState.PulledHigh;
         _wires[_gndWireIndex].State = NodeState.PulledLow;
