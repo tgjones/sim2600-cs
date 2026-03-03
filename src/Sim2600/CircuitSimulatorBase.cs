@@ -233,7 +233,12 @@ public abstract class CircuitSimulatorBase
             while (i < _lastRecalcOrder)
             {
                 var wireIndex = _recalcOrder[i];
-                _newRecalcArray[wireIndex] = false;
+                
+                // If wire has already been put into the newRecalcArray, then don't say that it needs to be recalculated again, since it's already been marked for recalculation.
+                // This can happen when a wire is connected to multiple transistors that are switching on or off in the same iteration.
+                var alreadyInNewArray = _newRecalcOrder.Take(_newLastRecalcOrder).Any(index => index == wireIndex);
+                if (!alreadyInNewArray)
+                    _newRecalcArray[wireIndex] = false;
 
                 DoWireRecalc(wireIndex);
 
