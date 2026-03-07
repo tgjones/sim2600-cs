@@ -9,7 +9,7 @@ partial class Sim2600WebProgram
     private static Sim2600Console _sim;
 
     [JSImport("dom.setSimState", "main.js")]
-    internal static partial void SetSimState(int halfClockCount, bool vSync, bool vBlank, bool restartImage, int color);
+    internal static partial void SetSimState(int halfClockCount, bool vSync, bool vBlank, bool restartImage, bool hasPixel, int color);
 
     [JSExport]
     internal static void StartSimulator(byte[] romBytes)
@@ -35,7 +35,18 @@ partial class Sim2600WebProgram
                 tia.IsHigh(tia.VSync), 
                 tia.IsHigh(tia.VBlank), 
                 restartImage, 
+                true,
                 rgba.ToRgba8());
+        }
+        else
+        {
+            SetSimState(
+                tia.HalfClkCount, 
+                tia.IsHigh(tia.VSync), 
+                tia.IsHigh(tia.VBlank), 
+                false, 
+                false,
+                0);
         }
     }
 }

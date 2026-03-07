@@ -6,7 +6,19 @@ const { setModuleImports, getAssemblyExports, getConfig, runMain } = await dotne
 
 setModuleImports('main.js', {
     dom: {
-        setInnerText: (selector, time) => document.querySelector(selector).innerText = time
+        setSimState: (halfCycles, vsync, vblank, shouldRestartImage, hasPixel, color) => {
+            document.getElementById('half-cycles').textContent = halfCycles;
+            document.getElementById('vsync-led').className  = 'indicator' + (vsync  ? ' active' : '');
+            document.getElementById('vblank-led').className = 'indicator' + (vblank ? ' active' : '');
+
+            if (shouldRestartImage) {
+                restartImage();
+            }
+
+            if (hasPixel) {
+                updateImage(color);
+            }
+        }
     }
 });
 
@@ -16,6 +28,15 @@ const exports = await getAssemblyExports(config.mainAssemblyName);
 const dropZone = document.getElementById('drop-zone');
 const romInput = document.getElementById('rom-input');
 const screen   = document.getElementById('screen');
+const ctx      = screen.getContext('2d');
+
+const SCREEN_WIDTH  = 228;
+const SCREEN_HEIGHT = 262;
+
+const imageData = ctx.createImageData(SCREEN_WIDTH, SCREEN_HEIGHT);
+
+let pixelX = 0;
+let pixelY = 0;
 
 dropZone.addEventListener('click', () => romInput.click());
 
@@ -44,13 +65,37 @@ function loadRom(file) {
         dropZone.style.display = 'none';
         screen.style.display = 'block';
         exports.Sim2600WebProgram.StartSimulator(rom);
+        requestAnimationFrame(runHalfCycle);
     };
     reader.readAsArrayBuffer(file);
 }
 
-// Status bar updater — called from .NET via JS interop
-window.setSimState = (halfCycles, vsync, vblank, restartImage, color) => {
-    document.getElementById('half-cycles').textContent = halfCycles;
-    document.getElementById('vsync-led').className  = 'indicator' + (vsync  ? ' active' : '');
-    document.getElementById('vblank-led').className = 'indicator' + (vblank ? ' active' : '');
-};
+function runHalfCycle() {
+    // TODO: batch
+    exports.Sim2600WebProgram.RunHalfCycle();
+
+    requestAnimationFrame(runHalfCycle);
+}
+
+function restartImage() {
+    pixelX = 0;
+    pixelY = 0;
+}
+
+function updateImage(color) {
+    const i = (pixelY * SCREEN_WIDTH + pixelX) * 4;
+    imageData.data[i    ] = (color >>> 24) & 0xFF;
+    imageData.data[i + 1] = (color >>> 16) & 0xFF;
+    imageData.data[i + 2] = (color >>>  8) & 0xFF;
+    imageData.data[i + 3] = (color       ) & 0xFF;
+    ctx.putImageData(imageData, 0, 0, pixelX, pixelY, 1, 1);
+
+    pixelX++;
+    if (pixelX >= SCREEN_WIDTH) {
+        pixelX = 0;
+        pixelY++;
+        if (pixelY >= SCREEN_HEIGHT) {
+            pixelY = 0;
+        }
+    }
+}
