@@ -1,5 +1,6 @@
 <Solution>
   <Project Path="Sim2600.Cli/Sim2600.Cli.csproj" />
   <Project Path="Sim2600.Tests/Sim2600.Tests.csproj" Id="10cc578f-c99f-4bb6-961d-148c23d8d74d" />
+  <Project Path="Sim2600.Web/Sim2600.Web.csproj" />
   <Project Path="Sim2600/Sim2600.csproj" />
 </Solution>

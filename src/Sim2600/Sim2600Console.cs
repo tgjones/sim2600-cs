@@ -13,8 +13,13 @@ public sealed class Sim2600Console
     private int _programLen;
 
     public Sim2600Console(string romFilePath)
+        : this(File.ReadAllBytes(romFilePath))
     {
-        LoadProgram(romFilePath);
+    }
+
+    public Sim2600Console(byte[] romBytes)
+    {
+        LoadProgram(romBytes);
         Sim6507.ResetChip();
 
         // The 6507's IRQ and NMI are connected to the supply voltage
@@ -276,18 +281,8 @@ public sealed class Sim2600Console
         }
     }
 
-    private void LoadProgram(string programFilePath)
+    private void LoadProgram(byte[] bytes)
     {
-        if (!File.Exists(programFilePath))
-        {
-            throw new InvalidOperationException($"ERROR: Could not find program '{programFilePath}'");
-        }
-
-        Console.WriteLine($"Setting 6502 program to ROM image {programFilePath}");
-        
-        // Load ROM from file
-        var bytes = File.ReadAllBytes(programFilePath);
-
         ushort baseAddr = 0xF000;
         if (bytes.Length == 8192)
         {

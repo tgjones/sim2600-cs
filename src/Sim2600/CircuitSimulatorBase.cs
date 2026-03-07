@@ -21,9 +21,9 @@ public abstract class CircuitSimulatorBase
     private int _lastRecalcOrder;
     private int _vccWireIndex;
     private int _gndWireIndex;
-    private BigInteger[] _lastWireGroupState;
+    private int[] _lastWireGroupState;
 
-    private BigInteger _lastChipGroupState = 0;
+    private int _lastChipGroupState = 0;
     private int[] _groupList;
     private int _groupListLastIndex = 0;
 
@@ -675,7 +675,7 @@ public abstract class CircuitSimulatorBase
             _transistors[transInd].GateState = NmosFet.GATE_HIGH;
         }
 
-        _lastWireGroupState = new BigInteger[numWires];
+        _lastWireGroupState = new int[numWires];
 
         _groupList = new int[_wires.Length];
     }

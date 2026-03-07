@@ -241,4 +241,10 @@ public class SimTIA : CircuitSimulatorBase
     private record struct Rgb(byte R, byte G, byte B);
 }
 
-public record struct Rgba(byte R, byte G, byte B, byte A);
+public record struct Rgba(byte R, byte G, byte B, byte A)
+{
+    public readonly int ToRgba8()
+    {
+        return (R << 24) + (G << 16) + (B << 8) + A;
+    }
+}
