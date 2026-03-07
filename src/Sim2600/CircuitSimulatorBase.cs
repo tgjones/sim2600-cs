@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Diagnostics;
-using System.Numerics;
+﻿using System.Diagnostics;
 using System.Text;
 
 namespace Sim2600;
@@ -554,28 +552,13 @@ public abstract class CircuitSimulatorBase
 
     public bool IsLowWN(string n) => _wires[_wireNames[n]].IsLow();
 
-    protected void LoadCircuit(string filePath)
+    protected void LoadCircuit(
+        int numWires, int nextCtrl, int noWire,
+        byte[] wirePulled, int[] wireCtrlFets, int[] wireGates, string[] wireNames,
+        int numFets, int[] fetSide1WireInds, int[] fetSide2WireInds, int[] fetGateWireInds)
     {
-        var unpickler = new Razorvine.Pickle.Unpickler();
-
-        using var fileStream = File.OpenRead(filePath);
-
-        var rootObj = (Hashtable)unpickler.load(fileStream);
-
-        var numWires = (int)rootObj["NUM_WIRES"];
-        var nextCtrl = (int)rootObj["NEXT_CTRL"];
-        var noWire = (int)rootObj["NO_WIRE"];
-        var wirePulled = (byte[])rootObj["WIRE_PULLED"];
-        var wireCtrlFets = (int[])rootObj["WIRE_CTRL_FETS"];
-        var wireGates = (int[])rootObj["WIRE_GATES"];
-        var wireNames = (ArrayList)rootObj["WIRE_NAMES"];
-        var numFets = (int)rootObj["NUM_FETS"];
-        var fetSide1WireInds = (int[])rootObj["FET_SIDE1_WIRE_INDS"];
-        var fetSide2WireInds = (int[])rootObj["FET_SIDE2_WIRE_INDS"];
-        var fetGateWireInds = (int[])rootObj["FET_GATE_INDS"];
-
         Debug.Assert(wirePulled.Length == numWires);
-        Debug.Assert(wireNames.Count == numWires);
+        Debug.Assert(wireNames.Length == numWires);
         Debug.Assert(fetSide1WireInds.Length == numFets);
         Debug.Assert(fetSide2WireInds.Length == numFets);
         Debug.Assert(fetGateWireInds.Length == numFets);
@@ -624,8 +607,8 @@ public abstract class CircuitSimulatorBase
                     2 => NodePulled.PulledLow,
                     _ => throw new InvalidOperationException()
                 };
-                _wires[i] = new Wire(i, (string)wireNames[i], wirePulledValue);
-                _wireNames[(string)wireNames[i]] = i;
+                _wires[i] = new Wire(i, wireNames[i], wirePulledValue);
+                _wireNames[wireNames[i]] = i;
             }
         }
 
@@ -649,7 +632,7 @@ public abstract class CircuitSimulatorBase
             {
                 if (s1 == _gndWireIndex) { s1 = s2; s2 = _gndWireIndex; }
                 else if (s1 == _vccWireIndex) { s1 = s2; s2 = _vccWireIndex; }
-                
+
                 if (transistors.Find(t => t.GateWireIndex == gate && t.Side1WireIndex == s1 && t.Side2WireIndex == s2) != null)
                 {
                     continue;

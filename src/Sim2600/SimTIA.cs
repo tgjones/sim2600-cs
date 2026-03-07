@@ -49,7 +49,10 @@ public class SimTIA : CircuitSimulatorBase
 
     public SimTIA()
     {
-        LoadCircuit("Chips/net_TIA.pkl");
+        LoadCircuit(
+            NetTIAData.NumWires, NetTIAData.NextCtrl, NetTIAData.NoWire,
+            NetTIAData.WirePulled, NetTIAData.WireCtrlFets, NetTIAData.WireGates, NetTIAData.WireNames,
+            NetTIAData.NumFets, NetTIAData.FetSide1WireInds, NetTIAData.FetSide2WireInds, NetTIAData.FetGateInds);
 
         InitColLumLUT();
 

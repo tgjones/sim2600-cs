@@ -16,7 +16,10 @@ public sealed class Sim6502 : CircuitSimulatorBase
 
     public Sim6502()
     {
-        LoadCircuit("Chips/net_6502.pkl");
+        LoadCircuit(
+            Net6502Data.NumWires, Net6502Data.NextCtrl, Net6502Data.NoWire,
+            Net6502Data.WirePulled, Net6502Data.WireCtrlFets, Net6502Data.WireGates, Net6502Data.WireNames,
+            Net6502Data.NumFets, Net6502Data.FetSide1WireInds, Net6502Data.FetSide2WireInds, Net6502Data.FetGateInds);
 
         // Store indices into the wireList.  This saves having
         // to look up the wires by their string name from the
