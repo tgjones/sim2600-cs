@@ -30,13 +30,30 @@ setModuleImports('main.js', {
 const config = getConfig();
 const exports = await getAssemblyExports(config.mainAssemblyName);
 
+const SCREEN_WIDTH  = 228;
+const SCREEN_HEIGHT = 262;
+
 const dropZone = document.getElementById('drop-zone');
 const romInput = document.getElementById('rom-input');
 const screen   = document.getElementById('screen');
 const ctx      = screen.getContext('2d');
 
-const SCREEN_WIDTH  = 228;
-const SCREEN_HEIGHT = 262;
+screen.width  = SCREEN_WIDTH;
+screen.height = SCREEN_HEIGHT;
+
+const SCREEN_RATIO = SCREEN_WIDTH / SCREEN_HEIGHT;
+new ResizeObserver(entries => {
+    const { width, height } = entries[0].contentRect;
+    if (width / height > SCREEN_RATIO) {
+        // height-constrained: fit to height
+        screen.style.height = `${height}px`;
+        screen.style.width  = `${height * SCREEN_RATIO}px`;
+    } else {
+        // width-constrained: fit to width
+        screen.style.width  = `${width}px`;
+        screen.style.height = `${width / SCREEN_RATIO}px`;
+    }
+}).observe(document.querySelector('main'));
 
 const imageData = ctx.createImageData(SCREEN_WIDTH, SCREEN_HEIGHT);
 
