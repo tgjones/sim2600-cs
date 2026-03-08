@@ -12,6 +12,11 @@ setModuleImports('main.js', {
             document.getElementById('vblank-led').className = 'indicator' + (vblank ? ' active' : '');
 
             if (shouldRestartImage) {
+                const now = performance.now();
+                if (simFrameStartTime !== null) {
+                    lastFrameTimeEl.textContent = `Last frame time: ${((now - simFrameStartTime) / 1000).toFixed(1)} seconds`;
+                }
+                simFrameStartTime = now;
                 restartImage();
             }
 
@@ -70,9 +75,50 @@ function loadRom(file) {
     reader.readAsArrayBuffer(file);
 }
 
-function runHalfCycle() {
-    // TODO: batch
-    exports.Sim2600WebProgram.RunHalfCycle();
+const TARGET_BUDGET = 0.80; // fraction of frame time the tuner aims for
+const HARD_CAP      = 0.87; // absolute max — loop breaks early if exceeded
+let callsPerFrame = 1;
+let lastFrameTime = null;
+
+// Frame time tracking (resets at shouldRestartImage, finishes at next shouldRestartImage)
+let simFrameStartTime = null;
+const lastFrameTimeEl    = document.getElementById('last-frame-time');
+const msPerHalfCycleEl   = document.getElementById('ms-per-half-cycle');
+
+// Running average: ms per half cycle, updated once per second
+let halfCycleCount   = 0;
+let statsWindowStart = performance.now();
+setInterval(() => {
+    const now     = performance.now();
+    const elapsed = now - statsWindowStart;
+    if (halfCycleCount > 0) {
+        msPerHalfCycleEl.textContent = `${(elapsed / halfCycleCount).toFixed(1)} ms / half cycle`;
+    }
+    halfCycleCount   = 0;
+    statsWindowStart = now;
+}, 1000);
+
+function runHalfCycle(timestamp) {
+    const frameDuration = lastFrameTime !== null ? timestamp - lastFrameTime : 16.67;
+    lastFrameTime = timestamp;
+
+    const budget  = frameDuration * TARGET_BUDGET;
+    const hardCap = frameDuration * HARD_CAP;
+    const t0 = performance.now();
+
+    for (let i = 0; i < callsPerFrame; i++) {
+        exports.Sim2600WebProgram.RunHalfCycle();
+        halfCycleCount++;
+        if (performance.now() - t0 >= hardCap) break;
+    }
+
+    const elapsed = performance.now() - t0;
+
+    // Adjust calls per frame: scale by budget/elapsed, clamped to avoid wild swings
+    if (elapsed > 0) {
+        const ideal = callsPerFrame * (budget / elapsed);
+        callsPerFrame = Math.max(1, Math.round(callsPerFrame * 0.75 + ideal * 0.25));
+    }
 
     requestAnimationFrame(runHalfCycle);
 }
