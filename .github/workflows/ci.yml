@@ -24,3 +24,46 @@ jobs:
     - name: Build & Test
       run: dotnet test --configuration Release
       working-directory: src
+
+  deploy:
+    needs: build
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v6
+
+    - name: Install .NET
+      uses: actions/setup-dotnet@v5
+      with:
+        global-json-file: global.json
+
+    - name: Restore .NET workloads
+      run: dotnet workload restore
+      working-directory: src
+
+    - name: Publish
+      run: >
+        dotnet publish src/Sim2600.Web/Sim2600.Web.csproj
+        --configuration Release
+        --output publish
+        /p:StaticWebAssetBasePath=/${{ github.event.repository.name }}
+
+    - name: Add .nojekyll
+      run: touch publish/wwwroot/.nojekyll
+
+    - name: Upload Pages artifact
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: publish/wwwroot
+
+    - name: Deploy to GitHub Pages
+      id: deploy
+      uses: actions/deploy-pages@v4
