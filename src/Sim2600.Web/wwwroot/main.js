@@ -12,11 +12,7 @@ setModuleImports('main.js', {
             document.getElementById('vblank-led').className = 'indicator' + (vblank ? ' active' : '');
 
             if (shouldRestartImage) {
-                const now = performance.now();
-                if (simFrameStartTime !== null) {
-                    lastFrameTimeEl.textContent = `Last frame time: ${((now - simFrameStartTime) / 1000).toFixed(1)} seconds`;
-                }
-                simFrameStartTime = now;
+                simFrameStartTime = performance.now();
                 restartImage();
             }
 
@@ -135,6 +131,10 @@ function runHalfCycle(timestamp) {
     if (elapsed > 0) {
         const ideal = callsPerFrame * (budget / elapsed);
         callsPerFrame = Math.max(1, Math.round(callsPerFrame * 0.75 + ideal * 0.25));
+    }
+
+    if (simFrameStartTime !== null) {
+        lastFrameTimeEl.textContent = `Current frame time: ${((performance.now() - simFrameStartTime) / 1000).toFixed(1)} seconds`;
     }
 
     requestAnimationFrame(runHalfCycle);
