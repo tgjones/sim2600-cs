@@ -99,16 +99,15 @@ const lastFrameTimeEl    = document.getElementById('last-frame-time');
 const msPerHalfCycleEl   = document.getElementById('ms-per-half-cycle');
 
 // Running average: ms per half cycle, updated once per second
-let halfCycleCount   = 0;
-let statsWindowStart = performance.now();
+// simExecMs accumulates only the time spent inside the simulation loop, excluding browser overhead
+let halfCycleCount = 0;
+let simExecMs      = 0;
 setInterval(() => {
-    const now     = performance.now();
-    const elapsed = now - statsWindowStart;
     if (halfCycleCount > 0) {
-        msPerHalfCycleEl.textContent = `${(elapsed / halfCycleCount).toFixed(1)} ms / half cycle`;
+        msPerHalfCycleEl.textContent = `${(simExecMs / halfCycleCount).toFixed(1)} ms / half cycle`;
     }
-    halfCycleCount   = 0;
-    statsWindowStart = now;
+    halfCycleCount = 0;
+    simExecMs      = 0;
 }, 1000);
 
 function runHalfCycle(timestamp) {
@@ -126,6 +125,7 @@ function runHalfCycle(timestamp) {
     }
 
     const elapsed = performance.now() - t0;
+    simExecMs += elapsed;
 
     // Adjust calls per frame: scale by budget/elapsed, clamped to avoid wild swings
     if (elapsed > 0) {
