@@ -1,0 +1,14 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Launch Blazor WASM in Chrome",
+      "type": "blazorwasm",
+      "request": "launch",
+      "browser": "chrome",
+      "url": "http://localhost:5207",
+      "cwd": "${workspaceFolder}/src/Sim2600.Web",
+      "webRoot": "${workspaceFolder}/src/Sim2600.Web/wwwroot"
+    }
+  ]
+}
