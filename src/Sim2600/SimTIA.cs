@@ -9,8 +9,7 @@ public class SimTIA : CircuitSimulatorBase
 
     private static readonly string[] DataBusPadNames = ["DB0", "DB1", "DB2", "DB3", "DB4", "DB5", "DB6", "DB7"];
 
-    // TODO(Tim: Bug? Should be DB7_drvLo?
-    private static readonly string[] DataBusDriverNames = ["DB6_drvLo", "DB6_drvHi", "DB7_drvHi", "DB7_drvHi"];
+    private static readonly string[] DataBusDriverNames = ["DB6_drvLo", "DB6_drvHi", "DB7_drvLo", "DB7_drvHi"];
 
     private static readonly string[] InputPadNames = ["I0", "I1", "I2", "I3", "I4", "I5"];
 
