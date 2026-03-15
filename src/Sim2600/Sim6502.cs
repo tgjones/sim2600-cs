@@ -99,16 +99,10 @@ public sealed class Sim6502 : CircuitSimulatorBase
 
         RecalcAllWires();
 
-        for (var i = 0; i < 4; i++)
+        for (var i = 0; i < 8; i++)
         {
-            if (i % 2 == 0)
-            {
-                SetLowWN("CLK0");
-            }
-            else
-            {
-                SetHighWN("CLK0");
-            }
+            SetLowWN("CLK0");
+            SetHighWN("CLK0");
         }
 
         Console.WriteLine("Setting 6502 RES high");
