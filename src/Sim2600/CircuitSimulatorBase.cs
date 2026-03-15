@@ -394,6 +394,12 @@ public abstract class CircuitSimulatorBase
             var index = _groupList[i];
 
             var simWire = _wires[index];
+
+            if (simWire.State == newValue)
+            {
+                continue;
+            }
+
             simWire.State = newValue;
 
             // Turn on or off the transistor gates controlled by this wire
@@ -663,7 +669,7 @@ public abstract class CircuitSimulatorBase
                 {
                     0 => NodePulled.Floating,
                     1 => NodePulled.PulledHigh,
-                    2 => NodePulled.PulledLow,
+                    2 => NodePulled.Floating,
                     _ => throw new InvalidOperationException()
                 };
                 _wires[i] = new Wire(i, wireNames[i], wirePulledValue);
