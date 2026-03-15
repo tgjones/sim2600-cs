@@ -26,12 +26,10 @@ public sealed class Sim2600Console
         // Setting them to 'pulled high' will keep them high.
         Sim6507.SetPulledHigh(Sim6507.GetWireIndex("IRQ"));
         Sim6507.SetPulledHigh(Sim6507.GetWireIndex("NMI"));
-        Sim6507.RecalcWireNameList(["IRQ", "NMI"]);
 
         // TIA CS1 is always high.  !CS2 is always grounded
         SimTIA.SetPulledHigh(SimTIA.GetWireIndex("CS1"));
         SimTIA.SetPulledLow(SimTIA.GetWireIndex("CS2"));
-        SimTIA.RecalcWireNameList(["CS1", "CS2"]);
 
         // We're running an Atari 2600 program, so set memory locations
         // for the console's switches and joystick state.
@@ -138,7 +136,6 @@ public sealed class Sim2600Console
         }
 
         cpu.DataBusValue = data;
-        cpu.RecalcWireList(cpu.DataBusPads);
 
         return data;
     }
@@ -309,12 +306,15 @@ public sealed class Sim2600Console
 
         var numPads = cpu.DataBusPads.Count;
 
+        Span<int> dataBusPads = stackalloc int[numPads];
+        Span<bool> dataBusValues = stackalloc bool[numPads];
+
         for (var i = 0; i < numPads; i++)
         {
-            var dbPadHigh = cpu.IsHigh(cpu.DataBusPads[i]);
-            tia.SetPulled(tia.DataBusPads[i], dbPadHigh);
+            dataBusPads[i] = tia.DataBusPads[i];
+            dataBusValues[i] = cpu.IsHigh(cpu.DataBusPads[i]);
         }
-        tia.RecalcWireList(tia.DataBusPads);
+        tia.SetPulled(dataBusPads, dataBusValues);
 
         var hidrv = false;
         foreach (var wireInd in tia.DataBusDrivers)
@@ -354,40 +354,38 @@ public sealed class Sim2600Console
         // difference.
         if (tia.HalfClkCount < 10)
         {
-            foreach (var wireIndex in tia.InputPads)
+            Span<int> inputPads = stackalloc int[tia.InputPads.Count];
+            Span<bool> pulledHigh = stackalloc bool[tia.InputPads.Count];
+            for (var i = 0; i < tia.InputPads.Count; i++)
             {
-                tia.SetPulledHigh(wireIndex);
+                inputPads[i] = tia.InputPads[i];
+                pulledHigh[i] = true;
             }
-            tia.RecalcWireList(tia.InputPads);
+            tia.SetPulled(inputPads, pulledHigh);
         }
 
         tia.SetPulledHigh(tia.PadIndDEL);
-        tia.RecalcWire(tia.PadIndDEL);
 
         // TIA 6x45 control ROM will change when R/W goes HI to LOW only if
         // the TIA CLK2 is LOW, so update R/W first, then CLK2.
         // R/W is high when 6502 is reading, low when 6502 is writing
 
         tia.SetPulled(tia.PadIndRW, cpu.IsHigh(cpu.PadIndRW));
-        tia.RecalcWire(tia.PadIndRW);
 
         var addr = cpu.AddressBusValue;
 
         // Transfer the state of the 6507 simulation's address bus
         // to the corresponding address inputs of the TIA simulation
+        Span<int> tiaAddrPads = stackalloc int[tia.AddressBusPads.Count];
+        Span<bool> tiaAddrValues = stackalloc bool[tia.AddressBusPads.Count];
         for (var i = 0; i < tia.AddressBusPads.Count; i++)
         {
             var tiaWireIndex = tia.AddressBusPads[i];
-            if (cpu.IsHigh(cpu.AddressBusPads[i]))
-            {
-                tia.SetHigh(tiaWireIndex);
-            }
-            else
-            {
-                tia.SetLow(tiaWireIndex);
-            }
+
+            tiaAddrPads[i] = tiaWireIndex;
+            tiaAddrValues[i] = cpu.IsHigh(cpu.AddressBusPads[i]);
         }
-        tia.RecalcWireList(tia.AddressBusPads);
+        tia.SetPulled(tiaAddrPads, tiaAddrValues);
 
         // 6507 AB7 goes to TIA CS3 and PIA CS1
         // 6507 AB12 goes to TIA CS0 and PIA CS0, but which 6502 AB line is it?
@@ -395,31 +393,31 @@ public sealed class Sim2600Console
         // 6502 AB15
         //
         // TODO: return changed/unchanged from setHigh, setLow to decide to recalc
+        ReadOnlySpan<int> tiaCS0CS3Pads = [tia.PadIndCS0, tia.PadIndCS3];
+        Span<bool> tiaCS0CS3Values = stackalloc bool[tiaCS0CS3Pads.Length];
         if (addr > 0x7F)
         {
             // It's not a TIA address, so set TIA CS3 high
             // Either CS3 high or CS0 high should disable TIA from writing
-            tia.SetHigh(tia.PadIndCS3);
-            tia.SetHigh(tia.PadIndCS0);
+            tiaCS0CS3Values[0] = true; // CS0 high
+            tiaCS0CS3Values[1] = true; // CS3 high
         }
         else
         {
             // It is a TIA addr from 0x00 to 0x7F, so set CS3 and CS0 low
-            tia.SetLow(tia.PadIndCS3);
-            tia.SetLow(tia.PadIndCS0);
+            tiaCS0CS3Values[0] = false; // CS0 low
+            tiaCS0CS3Values[1] = false; // CS3 low
         }
-        tia.RecalcWireList(tia.PadIndsCS0CS3);
+        tia.SetPulled(tiaCS0CS3Pads, tiaCS0CS3Values);
 
         UpdateDataBus();
 
         // Advance the TIA 2nd input clock that is controlled
         // by the 6507's clock generator.
         tia.SetPulled(tia.PadIndClk2, cpu.IsHigh(cpu.PadIndCLK1Out));
-        tia.RecalcWire(tia.PadIndClk2);
 
         // Advance TIA 'CLK0' by one half clock
         tia.SetPulled(tia.PadIndClk0, !tia.IsHigh(tia.PadIndClk0));
-        tia.RecalcWire(tia.PadIndClk0);
         tia.HalfClkCount++;
 
         // This is a good place to record the TIA and 6507 (6502)
@@ -430,7 +428,6 @@ public sealed class Sim2600Console
         // TIA RDY and 6507 RDY are pulled high through external resistor, so pull
         // the pad low if the TIA RDY_lowCtrl is on.
         cpu.SetPulled(cpu.PadIndRDY, !tia.IsHigh(tia.IndRDY_lowCtrl));
-        cpu.RecalcWire(cpu.PadIndRDY);
 
         // TIA sends a clock to the 6507.  Propagate this clock from the
         // TIA simulation to the 6507 simulation.
@@ -487,7 +484,6 @@ public sealed class Sim2600Console
                 // like a regular memory read.
                 WriteMemory(0x284, pia.TimerValue);
             }
-            cpu.RecalcWire(cpu.PadIndCLK0);
             cpu.HalfClkCount++;
 
             // TODO(Tim): Don't need to retrieve it again?

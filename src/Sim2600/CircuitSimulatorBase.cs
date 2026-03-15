@@ -153,11 +153,16 @@ public abstract class CircuitSimulatorBase
 
     public int GetWireIndex(string wireName) => _wireNames[wireName];
 
-    protected void RecalcNamedWire(string wireName) => RecalcWireList([GetWireIndex(wireName)]);
+    private void RecalcNamedWire(string wireName) => RecalcWireList([GetWireIndex(wireName)]);
 
-    public void RecalcWireNameList(params string[] wireNames)
+    private void RecalcWireNameList(params string[] wireNames)
     {
-        RecalcWireList(wireNames.Select(GetWireIndex));
+        var wireIndices = new int[wireNames.Length];
+        for (var i = 0; i < wireNames.Length; i++)
+        {
+            wireIndices[i] = GetWireIndex(wireNames[i]);
+        }
+        RecalcWireList(wireIndices);
     }
 
     protected void RecalcAllWires()
@@ -170,7 +175,7 @@ public abstract class CircuitSimulatorBase
                 wireIndices.Add(i);
             }
         }
-        RecalcWireList(wireIndices);
+        RecalcWireList(wireIndices.ToArray());
     }
 
     private void PrepForRecalc()
@@ -188,7 +193,7 @@ public abstract class CircuitSimulatorBase
         _lastRecalcOrder = 0;
     }
 
-    public void RecalcWireList(IEnumerable<int> nwireList)
+    private void RecalcWireList(ReadOnlySpan<int> nwireList)
     {
         PrepForRecalc();
 
@@ -205,7 +210,7 @@ public abstract class CircuitSimulatorBase
         DoRecalcIterations();
     }
 
-    public void RecalcWire(int wireIndex)
+    private void RecalcWire(int wireIndex)
     {
         PrepForRecalc();
 
@@ -511,43 +516,56 @@ public abstract class CircuitSimulatorBase
         return maxState;
     }
 
-    // setHighWN() and setLowWN() do not trigger an update
-    // of the simulation.
     protected void SetHighWN(string n)
     {
-        var wireIndex = _wireNames[n];
-        _wires[wireIndex].SetHigh();
+        SetHigh(_wireNames[n]);
     }
 
     protected void SetLowWN(string n)
     {
-        var wireIndex = _wireNames[n];
-        _wires[wireIndex].SetLow();
+        SetLow(_wireNames[n]);
     }
 
     public void SetHigh(int wireIndex)
     {
         _wires[wireIndex].SetPulledHighOrLow(true);
+        RecalcWire(wireIndex);
     }
 
     public void SetLow(int wireIndex)
     {
         _wires[wireIndex].SetPulledHighOrLow(false);
+        RecalcWire(wireIndex);
     }
 
     public void SetPulled(int wireIndex, bool high)
     {
         _wires[wireIndex].SetPulledHighOrLow(high);
+        RecalcWire(wireIndex);
+    }
+
+    public void SetPulled(ReadOnlySpan<int> wireIndices, ReadOnlySpan<bool> values)
+    {
+        for (var i = 0; i < wireIndices.Length; i++)
+        {
+            var wireIndex = wireIndices[i];
+            var high = values[i];
+            _wires[wireIndex].SetPulledHighOrLow(high);
+        }
+
+        RecalcWireList(wireIndices);
     }
 
     public void SetPulledHigh(int wireIndex)
     {
         _wires[wireIndex].SetPulledHighOrLow(true);
+        RecalcWire(wireIndex);
     }
 
     public void SetPulledLow(int wireIndex)
     {
         _wires[wireIndex].SetPulledHighOrLow(false);
+        RecalcWire(wireIndex);
     }
 
     public bool IsHigh(int wireIndex) => _wires[wireIndex].IsHigh();

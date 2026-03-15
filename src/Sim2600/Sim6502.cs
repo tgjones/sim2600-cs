@@ -74,11 +74,15 @@ public sealed class Sim6502 : CircuitSimulatorBase
         }
         set
         {
+            Span<int> dataBusPads = stackalloc int[DataBusPads.Count];
+            Span<bool> values = stackalloc bool[DataBusPads.Count];
+
             for (var i = 0; i < DataBusPads.Count; i++)
             {
-                var high = (value & (1 << i)) != 0;
-                SetPulled(DataBusPads[i], high);
+                dataBusPads[i] = DataBusPads[i];
+                values[i] = (value & (1 << i)) != 0;
             }
+            SetPulled(dataBusPads, values);
         }
     }
 
@@ -90,7 +94,6 @@ public sealed class Sim6502 : CircuitSimulatorBase
         SetHighWN("IRQ"); // No interrupt
         SetHighWN("NMI"); // No interrupt
         SetHighWN("RDY"); // Let the chip run. Will connect to TIA with pullup.
-        RecalcWireNameList(["IRQ", "NMI", "RES", "RDY"]);
         for (var i = 0; i < 4; i++)
         {
             if (i % 2 != 0)
@@ -101,12 +104,10 @@ public sealed class Sim6502 : CircuitSimulatorBase
             {
                 SetHighWN("CLK0");
             }
-            RecalcNamedWire("CLK0");
         }
 
         Console.WriteLine("Setting 6502 RES high");
         SetHighWN("RES");
-        RecalcNamedWire("RES");
 
         Console.WriteLine("Finished 6502 reset sequence");
     }
