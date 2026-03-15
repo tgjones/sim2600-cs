@@ -102,6 +102,12 @@ public abstract class CircuitSimulatorBase
         {
             var wire = _wires[i];
 
+            if (wire == null)
+            {
+                result.Append("_f");
+                continue;
+            }
+
             result.Append(wire.Pulled switch
             {
                 NodePulled.Floating => "_",
@@ -594,7 +600,7 @@ public abstract class CircuitSimulatorBase
             tok = wireGates[wgi++];
             Debug.Assert(tok == nextCtrl);
 
-            if (wireCtrlFets.Length == 0 && gates.Count == 0)
+            if (controlFets.Count == 0 && gates.Count == 0)
             {
                 Debug.Assert(wireNames[i] == "");
             }
