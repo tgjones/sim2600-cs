@@ -89,14 +89,19 @@ public sealed class Sim6502 : CircuitSimulatorBase
     public void ResetChip()
     {
         Console.WriteLine("Starting 6502 reset sequence: pulling RES low");
-        RecalcAllWires();
+
         SetLowWN("RES");
+        SetHighWN("CLK0");
+        SetHighWN("RDY"); // Let the chip run. Will connect to TIA with pullup.
+        SetLowWN("S.O.");
         SetHighWN("IRQ"); // No interrupt
         SetHighWN("NMI"); // No interrupt
-        SetHighWN("RDY"); // Let the chip run. Will connect to TIA with pullup.
+
+        RecalcAllWires();
+
         for (var i = 0; i < 4; i++)
         {
-            if (i % 2 != 0)
+            if (i % 2 == 0)
             {
                 SetLowWN("CLK0");
             }
