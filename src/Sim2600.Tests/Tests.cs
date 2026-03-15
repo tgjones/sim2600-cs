@@ -8,6 +8,7 @@ public class Tests
     [Arguments("DonkeyKong")]
     [Arguments("Pitfall")]
     [Arguments("SpaceInvaders")]
+    [Arguments("HelloWorld")]
     public async Task StateMatchesExpectedValues(string rom)
     {
         var expectedFilePath = Path.Combine("Assets", $"{rom}-ExpectedStates.txt");
