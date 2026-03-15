@@ -94,6 +94,41 @@ public abstract class CircuitSimulatorBase
         }
     }
 
+    public string GetStateFlawless()
+    {
+        var result = new StringBuilder(_wires.Length);
+
+        for (var i = 0; i < _wires.Length; i++)
+        {
+            var wire = _wires[i];
+            
+            if (wire == null)
+            {
+                result.Append('x');
+            }
+            else if (i == _vccWireIndex)
+            {
+                result.Append('v');
+            }
+            else if (i == _gndWireIndex)
+            {
+                result.Append('g');
+            }
+            else
+            {
+                result.Append(wire.State switch
+                {
+                    NodeState.PulledLow => "l",
+                    NodeState.PulledHigh => "h",
+                    NodeState.Floating => "l",
+                    _ => throw new InvalidOperationException()
+                });
+            }
+        }
+
+        return result.ToString();
+    }
+
     public string GetState()
     {
         var result = new StringBuilder(_wires.Length);
